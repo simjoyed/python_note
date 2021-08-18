@@ -59,14 +59,86 @@ q.appendleft(4)
 q.pop()
 q.popleft()
 
+1.4 查找最大或最小的 N 个元素
+q：从一个集合中获得最大或者最小的 N 个元素列表。
+运用heapq 模块有两个函数：nlargest() 和 nsmallest() 
+portfolio = [
+    {'name': 'IBM', 'shares': 100, 'price': 91.1},
+    {'name': 'AAPL', 'shares': 50, 'price': 543.22},
+    {'name': 'FB', 'shares': 200, 'price': 21.09},
+    {'name': 'HPQ', 'shares': 35, 'price': 31.75},
+    {'name': 'YHOO', 'shares': 45, 'price': 16.35},
+    {'name': 'ACME', 'shares': 75, 'price': 115.65}
+]
+cheap = heapq.nsmallest(3, portfolio, key=lambda s: s['price'])#参数"3"代表N，"portfolio"代表列表，接受参数key，用于dict或其他数据结构类型使用
+expensive = heapq.nlargest(3, portfolio, key=lambda s: s['price'])
 
+heap.heapify(list)可以转换列表成为堆结构。堆数据结构最重要的特征是heap[0]永远是最小的元素。剩余的元素可以很容易的通过调用 heapq.heappop() 方法得到， 
+该方法会先将第一个元素弹出来，然后用下一个最小的元素来取代被弹出元素（这种操作时间复杂度仅仅是 O(log N)，N 是堆大小）。 
+比如，如果想要查找最小的 3 个元素，heapq.heappop(heap)使用3次。
 
+找最大最小值方法总结：
+1.当要查找的元素个数相对比较小的时候，函数 nlargest() 和 nsmallest() 是很合适的
+2.仅想查找唯一的最小或最大（N=1）的元素的话，那么使用 min() 和 max() 函数会更快些
+3.如果 N 的大小和集合大小接近的时候，通常先排序这个集合然后再使用切片操作会更快点( sorted(items)[:N] 或者是 sorted(items)[-N:] )
 
+1.5 实现一个优先级队列
+定义类，class后面可加可不加()，如果继承类的时候，一定要加括号并填父类名。
+import heapq
+class PriorityQueue:
+    def __init__(self):
+        self._queue = []
+        self._index = 0
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (-priority, self._index, item))#括号里括的是元祖！heappush(heap,item)往堆里添加新值，"heap"是堆，"item"为新值
+        self._index += 1#改变__init()__中的index的大小
+    def pop(self):
+        return heapq.heappop(self._queue)[-1]#索引为最后位置处的值
+class Item:
+    def __init__(self, name):
+        self.name = name
+    def __repr__(self):
+        return 'Item({!r})'.format(self.name)#format()方法格式化指定的值，并将其插入字符串的占位符内。
+q = PriorityQueue()
+q.push(Item('foo'), 1)
+q.push(Item('bar'), 5)
+q.push(Item('spam'), 4)
+q.push(Item('grok'), 1)
+q.pop()
+q.pop()
+q.pop()
+q.pop()
 
+1.6 字典中的键映射多个值
+q：实现一个键对应多个值的字典（一键多值字典[multidict]）
+d = {
+    'a' : [1, 2, 3],
+    'b' : [4, 5]
+}
+e = {
+    'a' : {1, 2, 3},
+    'b' : {4, 5}
+}
+或是使用collections模块中的defaultdict来构造这样的字典。
+defaultdict的一个特征是它会自动初始化每个key刚开始对应的值，所以只需要关注添加元素操作。
+from collections import defaultdict
+d = defaultdict(list)#列表
+d['a'].append(1)
+d['a'].append(2)
+d['b'].append(4)
+d = defaultdict(set)#集合
+d['a'].add(1)
+d['a'].add(2)
+d['b'].add(4)
 
-
-
-
-
-
+一般来讲，创建一个多值映射字典是很简单的。但是，如果你选择自己实现的话，那么对于值的初始化可能会有点麻烦， 你可能会像下面这样来实现：
+d = {}
+for key, value in pairs:
+    if key not in d:
+        d[key] = []
+    d[key].append(value)
+如果使用 defaultdict 的话代码就更加简洁了：
+d = defaultdict(list)
+for key, value in pairs:
+    d[key].append(value)
 
