@@ -14,7 +14,7 @@ q：现在有一个包含 N 个元素的元组或者是序列，将它分解为 
 q：从任意可迭代对象中解压出 N 个元素出来（可迭代对象的元素个数超过N）。
 运用“*表达式”。
 星号表达式在迭代元素为可变长元组的序列时是很有用的，如下例所示：
-#records是一个
+#records是一个元祖
 records = [
     ('foo', 1, 2),
     ('bar', 'hello'),
@@ -34,7 +34,7 @@ for tag, *args in records:
 
 1.3 保留最后 N 个元素
 q：在迭代操作或者其他操作的时候，只保留最后有限几个元素的历史记录。
-#从collections模块导入deque
+#从collections模块导入deque，collections容器，deque队列（类似于列表容器）
 from collections import deque
 #定义函数，注意这里deque和yield
 def search(lines, pattern, history=5):
@@ -83,22 +83,22 @@ heap.heapify(list)可以转换列表成为堆结构。堆数据结构最重要�
 3.如果 N 的大小和集合大小接近的时候，通常先排序这个集合然后再使用切片操作会更快点( sorted(items)[:N] 或者是 sorted(items)[-N:] )
 
 1.5 实现一个优先级队列
-定义类，class后面可加可不加()，如果继承类的时候，一定要加括号并填父类名。
+#定义类，class后面可加可不加()，如果继承类的时候，一定要加括号并填父类名。
 import heapq
 class PriorityQueue:
     def __init__(self):
         self._queue = []
         self._index = 0
     def push(self, item, priority):
-        heapq.heappush(self._queue, (-priority, self._index, item))#括号里括的是元祖！heappush(heap,item)往堆里添加新值，"heap"是堆，"item"为新值
-        self._index += 1#改变__init()__中的index的大小
+        heapq.heappush(self._queue, (-priority, self._index, item)) #括号里括的是元祖！heappush(heap,item)往堆里添加新值，"heap"是堆，"item"为新值
+        self._index += 1 #改变__init()__中的index的大小
     def pop(self):
-        return heapq.heappop(self._queue)[-1]#索引为最后位置处的值
+        return heapq.heappop(self._queue)[-1] #索引为最后位置处的值
 class Item:
     def __init__(self, name):
         self.name = name
     def __repr__(self):
-        return 'Item({!r})'.format(self.name)#format()方法格式化指定的值，并将其插入字符串的占位符内。
+        return 'Item({!r})'.format(self.name) #format()方法格式化指定的值，并将其插入字符串的占位符内。
 q = PriorityQueue()
 q.push(Item('foo'), 1)
 q.push(Item('bar'), 5)
