@@ -535,17 +535,209 @@ p2 = { key:prices[key] for key in prices.keys() & tech_names }
 
 运行速度上，字典推导式最快且更清晰。
 
+1.18 映射名称到序列元素
+q：想通过名称来访问元素。
+使用collections.namedtuple()函数返回python标准元组类型的子类。
+>>> from collections import namedtuple #导入namedtuple，tuple：元组
+>>> Subscriber = namedtuple('Subscriber', ['addr', 'joined']) #构造元组类型
+>>> sub = Subscriber('jonesy@example.com', '2012-10-19') #返回元组实例
+>>> sub
+Subscriber(addr='jonesy@example.com', joined='2012-10-19')
+>>> sub.addr
+'jonesy@example.com'
+>>> sub.joined
+'2012-10-19'
+>>>
 
+namedtuple的实例与普通的元组是可互换的，而且支持所有普通元组所支持的操作，例如索引（indexing）和分解（unpacking）
+>>> len(sub) #索引
+2
+>>> addr, joined = sub #分解
+>>> addr
+'jonesy@example.com'
+>>> joined
+'2012-10-19'
+>>>
 
+为什么需要将名称映射到序列的元素中？因为通过元素的位置来访问数据，假如在表单中新增了一列数据，则无法访问原有的数据。
+因此，首先将返回的元组转型未命名元组，则可解决这一问题。
+#原有的代码：
+def compute_cost(records):
+    total = 0.0
+    for rec in records:
+        total += rec[1] * rec[2] #计算总的市值和
+    return total
+    
+#使用命名元组的代码：
+from collections import namedtuple 
+Stock = namedtuple('Stock', ['name', 'shares', 'price']) #构造命名元组
+def compute_cost(records):
+    total = 0.0 #0.0 保留一位小数？
+    for rec in records: 
+        s = Stock(*rec) #将列表拆分成一个个的独立元素，不加*，会将整个列表当做一个元素使用（rec是个列表）。*args：接收若干个位置参数，转换成元组tuple形式
+        total += s.shares * s.price
+    return total
 
+注意：namedtuple是不可变的（immutable）
+from collections import namedtuple
 
+Stock = namedtuple('Stock', ['name', 'shares', 'price'])
+def compute_cost(records):
+    total = 0.0
+    for rec in records:
+        s = Stock(*rec)
+        total += s.shares * s.price
+    return total
 
+如需改变，需使用namedtuple实例的_replace()方法。
+>>> s = s._replace(shares=75)
+>>> s
+Stock(name='ACME', shares=75, price=123.45)
+>>>
 
+_replace通常用来：创建一个包含默认值的“原形”元组，使用_replace()方法创建一个新的实例，把相应的值替换掉
+from collections import namedtuple
 
+Stock = namedtuple('Stock', ['name', 'shares', 'price', 'date', 'time']) #构造命名元组
 
+# Create a prototype instance
+stock_prototype = Stock('', 0, 0.0, None, None) #“原形”元组
 
+# Function to convert a dictionary to a Stock #将字典转化为元组
+def dict_to_stock(s):
+    return stock_prototype._replace(**s) #双**，与上面的单*一样，为了拆分成一个个的独立元素，因为这里的s是字典，用双*。**kwargs：接收若干个关键字参数，转换成字典dict形式
 
+>>> a = {'name': 'ACME', 'shares': 100, 'price': 123.45}
+>>> dict_to_stock(a)
+Stock(name='ACME', shares=100, price=123.45, date=None, time=None) #输出元组
+>>> b = {'name': 'ACME', 'shares': 100, 'price': 123.45, 'date': '12/17/2012'}
+>>> dict_to_stock(b)
+Stock(name='ACME', shares=100, price=123.45, date='12/17/2012', time=None)
+>>>
 
+8.4节中会考虑定义一个高效的数据结构，可以方便的修改各种实例属性：使用__slots__属性的类。（slots，插槽）
 
+1.19 转换并同时计算数据
+q：在数据进行计算时，需先对数据做转换或筛选。
+运用生成器表达式。
+nums = [1, 2, 3, 4, 5]
+s = sum(x * x for x in nums) #计算平方和
 
+更多的例子：
+# Determine if any .py files exist in a directory 确定目录中是否存在.py文件
+import os #导入os模块，操作系统模块
+files = os.listdir('dirname')
+if any(name.endswith('.py') for name in files): #any()函数，判断给定的可迭代参数 iterable 是否全部为 False，则返回 False，如果有一个为 True，则返回 True。
+    print('There be python!')
+else:
+    print('Sorry, no python.')
+    
+# Output a tuple as CSV #将元组输出为CSV
+s = ('ACME', 50, 123.45) #s为元组
+print(','.join(str(x) for x in s)) #join()方法用于将序列中的元素以指定的字符连接生成一个新的字符串。这里以“,”连接。
 
+# Data reduction across fields of a data structure #跨数据结构字段的数据简化
+portfolio = [
+    {'name':'GOOG', 'shares': 50},
+    {'name':'YHOO', 'shares': 75},
+    {'name':'AOL', 'shares': 20},
+    {'name':'SCOX', 'shares': 65}
+]
+min_shares = min(s['shares'] for s in portfolio) #针对字典也可以
+
+ 比如，在上面的portfolio（证券）例子中，可以考虑下面的替代方案：
+# Original: Returns 20
+min_shares = min(s['shares'] for s in portfolio)
+# Alternative: Returns {'name': 'AOL', 'shares': 20}
+min_shares = min(portfolio, key=lambda s: s['shares']) #替代方案
+
+1.20 合并多个字典或映射
+q：有多个字典或映射，想在逻辑上将它们合并为一个单独的映射结构，并执行某些特定的操作，比如查找值或检查键是否存在。
+运用collections模块中的ChainMap类来解决。
+如有两个字典：
+a = {'x': 1, 'z': 3 }
+b = {'y': 2, 'z': 4 }
+
+from collections import ChainMap
+c = ChainMap(a,b) #合并
+print(c['x']) # Outputs 1 (from a)
+print(c['y']) # Outputs 2 (from b)
+print(c['z']) # Outputs 3 (from a)
+
+ChainMap接受多个映射然后在逻辑上使它们表现为一个单独的映射结构，这些映射并不是真的合并在一起了，
+ChainMap类在内部建立了一个容纳这些映射关系的列表，并重新定义常见的字典操作来遍历这个列表。
+
+>>> len(c)
+3
+>>> list(c.keys())
+['x', 'y', 'z']
+>>> list(c.values())
+[1, 2, 3]
+>>>
+有重复的键，第一次出现的映射值会被返回。例子程序中的 c['z'] 总是会返回字典 a 中对应的值，而不是 b 中对应的值。
+
+对于字典的更新或删除操作总是影响的是列表中第一个字典。比如：
+>>> c['z'] = 10
+>>> c['w'] = 40
+>>> del c['x']
+>>> a
+{'w': 40, 'z': 10}
+>>> del c['y']
+Traceback (most recent call last):
+...
+KeyError: "Key not found in the first mapping: 'y'"
+>>>
+
+ChainMap对于编程语言中的作用范围变量（比如 globals全局变量, locals局部变量等）是非常有用的。 
+有一些方法可以使它变得简单：
+>>> values = ChainMap()
+>>> values['x'] = 1
+>>> # Add a new mapping 增加一个新的映射
+>>> values = values.new_child()
+>>> values['x'] = 2
+>>> # Add a new mapping
+>>> values = values.new_child()
+>>> values['x'] = 3
+>>> values
+ChainMap({'x': 3}, {'x': 2}, {'x': 1})
+>>> values['x']
+3
+>>> # Discard last mapping 丢弃最后的映射
+>>> values = values.parents
+>>> values['x']
+2
+>>> # Discard last mapping
+>>> values = values.parents
+>>> values['x']
+1
+>>> values
+ChainMap({'x': 1})
+>>>
+
+ChainMap的替代方案，利用字典的updata()方法将多个字典合并在一起。
+>>> a = {'x': 1, 'z': 3 }
+>>> b = {'y': 2, 'z': 4 }
+>>> merged = dict(b)
+>>> merged.update(a)
+>>> merged['x']
+1
+>>> merged['y']
+2
+>>> merged['z']
+3
+>>>
+
+两者区别：updata()破坏了原始数据。
+>>> a['x'] = 13
+>>> merged['x']
+1
+ChainMap 使用原来的字典，它自己不创建新的字典。所以它并不会产生上面所说的结果
+>>> a = {'x': 1, 'z': 3 }
+>>> b = {'y': 2, 'z': 4 }
+>>> merged = ChainMap(a, b)
+>>> merged['x']
+1
+>>> a['x'] = 42
+>>> merged['x'] # Notice change to merged dicts
+42
+>>>
