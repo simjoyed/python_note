@@ -1,1 +1,143 @@
+2.1 针对任意多的分隔符拆分字符串
+q：将一个字符串分割为多个字段，但是分隔符(以及分隔符之间的空格)并不是固定的。
+使用正则表达式模块re的split()方法。re.split()
+>>> line = 'asdf fjdk; afed, fjek,asdf, foo'
+>>> import re
+>>> re.split(r'[;,\s]\s*', line) #r'':字符串加r''，防止字符串转义；[]：两个以上的切割符要放在[]里；\s：包含不看见的符，即空格、制表符、换页符；\s*：不知道什么意思
+['asdf', 'fjdk', 'afed', 'fjek', 'asdf', 'foo']
+
+使用re.split()时，注意则表达式中是否包含一个括号捕获分组，如果使用了捕获分组，那么被匹配的文本也将出现在结果列表中。
+>>> fields = re.split(r'(;|,|\s)\s*', line)
+>>> fields
+['asdf', ' ', 'fjdk', ';', 'afed', ',', 'fjek', ',', 'asdf', ',', 'foo']
+>>>
+
+>>> values = fields[::2] #从头到尾，奇数位置的值
+>>> delimiters = fields[1::2] + [''] #从第二个到尾，偶数位置的值
+>>> values
+['asdf', 'fjdk', 'afed', 'fjek', 'asdf', 'foo']
+>>> delimiters
+[' ', ';', ',', ',', ',', '']
+>>> # Reform the line using the same delimiters 使用相同的分隔符修改行
+>>> ''.join(v+d for v,d in zip(values, delimiters)) #str.join(item)，join函数是一个字符串操作函数。zip()函数将对象中对应的元素打包成一个个元组，然后返回由这些元组组成的列表。
+'asdf fjdk;afed,fjek,asdf,foo'
+>>>
+
+若不想保留分隔符，以(?:...)形式指定。
+>>> re.split(r'(?:,|;|\s)\s*', line)
+['asdf', 'fjdk', 'afed', 'fjek', 'asdf', 'foo']
+>>>
+
+2.2 字符串开头或结尾做文本匹配
+q：通过指定的文本模式去检查字符串的开头或者结尾，比如文件名后缀，URL Scheme等。
+使用str.startswith() 或者是 str.endswith() 方法，返回True或False
+>>> filename = 'spam.txt'
+>>> filename.endswith('.txt')
+True
+>>> filename.startswith('file:')
+False
+>>> url = 'http://www.python.org'
+>>> url.startswith('http:')
+True
+>>>
+
+如果针对多个选项做检查，只需要将所有的匹配项放入到一个元组中去， 然后传给 startswith() 或者 endswith() 方法：
+>>> import os
+>>> filenames = os.listdir('.') #os.listdir()方法用于返回指定的文件夹包含的文件或文件夹的名字的列表。
+>>> filenames
+[ 'Makefile', 'foo.c', 'bar.py', 'spam.c', 'spam.h' ]
+>>> [name for name in filenames if name.endswith(('.c', '.h')) ] #找到以'.c', '.h'结尾的文件名
+['foo.c', 'spam.c', 'spam.h']
+>>> any(name.endswith('.py') for name in filenames) #any() 函数用于判断给定的可迭代参数 iterable 是否全部为 False，则返回 False，如果有一个为 True，则返回 True。
+True #这里结果为True，因为for name in filenames循环了5次，包含'bar.py'
+>>>
+
+例子二：
+from urllib.request import urlopen #urlopen通过网址URL来获取数据
+def read_data(name):
+    if name.startswith(('http:', 'https:', 'ftp:')):
+        return urlopen(name).read() #网页数据使用urlopen
+    else:
+        with open(name) as f:
+            return f.read() #其余的直接读取
+
+奇怪的是，这个方法中必须要输入一个元组作为参数。如果你恰巧有一个list或者set类型的选择项，要确保传递参数前先调用tuple()将其转换为元组类型。比如：
+>>> choices = ['http:', 'ftp:']
+>>> url = 'http://www.python.org'
+>>> url.startswith(choices)
+Traceback (most recent call last):
+File "<stdin>", line 1, in <module>
+TypeError: startswith first arg must be str or a tuple of str, not list
+>>> url.startswith(tuple(choices)) #转换成元组
+True
+>>>
+
+startswith()和endswith()方法也可以通过使用切片来达到同样的效果：
+>>> filename = 'spam.txt'
+>>> filename[-4:] == '.txt' #倒数四个字符是否等于'.txt'
+True
+>>> url = 'http://www.python.org'
+>>> url[:5] == 'http:' or url[:6] == 'https:' or url[:4] == 'ftp:'
+True
+>>>
+
+正则表达式也可作为替代方案：（一般不常用,对于简单的匹配有点大材小用了）
+>>> import re
+>>> url = 'http://www.python.org'
+>>> re.match('http:|https:|ftp:', url) 
+<_sre.SRE_Match object at 0x101253098>
+>>>
+
+当startswith()和endswith()方法与其他操作相结合的时候效果很不错。比如，下面这个语句检查某个文件夹中是否存在指定的文件类型：
+if any(name.endswith(('.c', '.h')) for name in listdir(dirname)):
+...
+
+2.3 用Shell通配符做字符串匹配
+q：使用Unix Shell中常用的通配符(比如 *.py , Dat[0-9]*.csv 等)去匹配文本字符串
+使用fnmatch模块下的两个函数——fnmatch()和fnmatchcase()可以实现这样的匹配。
+>>> from fnmatch import fnmatch, fnmatchcase
+>>> fnmatch('foo.txt', '*.txt')
+True
+>>> fnmatch('foo.txt', '?oo.txt')
+True
+>>> fnmatch('Dat45.csv', 'Dat[0-9]*')
+True
+>>> names = ['Dat1.csv', 'Dat2.csv', 'config.ini', 'foo.py']
+>>> [name for name in names if fnmatch(name, 'Dat*.csv')]
+['Dat1.csv', 'Dat2.csv']
+>>>
+
+fnmatchcase()完全根据提供的大小写方式匹配。比如：
+>>> fnmatchcase('foo.txt', '*.TXT')
+False
+>>>
+
+在处理非文件名的字符串时也是很有用的：
+addresses = [
+    '5412 N CLARK ST',
+    '1060 W ADDISON ST',
+    '1039 W GRANVILLE AVE',
+    '2122 N CLARK ST',
+    '4802 N BROADWAY',
+]
+可写如下列表推导式：
+>>> from fnmatch import fnmatchcase
+>>> [addr for addr in addresses if fnmatchcase(addr, '* ST')]
+['5412 N CLARK ST', '1060 W ADDISON ST', '2122 N CLARK ST']
+>>> [addr for addr in addresses if fnmatchcase(addr, '54[0-9][0-9] *CLARK*')]
+['5412 N CLARK ST']
+>>>
+
+fnmatch()函数匹配能力介于简单的字符串方法和强大的正则表达式之间。如果需要做文件名的匹配，最好使用glob模块。参考5.13小节。
+
+
+
+
+
+
+
+
+
+
+
 
