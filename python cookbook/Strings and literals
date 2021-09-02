@@ -130,6 +130,122 @@ addresses = [
 
 fnmatch()函数匹配能力介于简单的字符串方法和强大的正则表达式之间。如果需要做文件名的匹配，最好使用glob模块。参考5.13小节。
 
+2.4 字符串匹配和搜索
+q：匹配或者搜索特定模式的文本。
+如果只是匹配简单的文字，只需要调用基本字符串方法，如str.find() , str.endswith() , str.startswith()
+>>> text = 'yeah, but no, but yeah, but no, but yeah'
+>>> # Exact match
+>>> text == 'yeah'
+False
+>>> # Match at start or end
+>>> text.startswith('yeah')
+True
+>>> text.endswith('no')
+False
+>>> # Search for the location of the first occurrence 搜索第一个出现的位置
+>>> text.find('no')
+10
+>>>
+
+对于复杂的匹配需要使用正则表达式和 re 模块。
+如匹配数字格式的日期字符串比如 11/27/2012 ：
+>>> text1 = '11/27/2012'
+>>> text2 = 'Nov 27, 2012'
+>>>
+>>> import re
+>>> # Simple matching: \d+：表示匹配一个或多个数字
+>>> if re.match(r'\d+/\d+/\d+', text1): #类似于占位符\d + / \d + / \d +
+... print('yes')
+... else:
+... print('no')
+...
+yes
+>>> if re.match(r'\d+/\d+/\d+', text2):
+... print('yes')
+... else:
+... print('no')
+...
+no
+>>>
+
+若对同一种模式做多次匹配，使用compile()将正则表达式预编译成一个模式对象。compile：编译
+>>> datepat = re.compile(r'\d+/\d+/\d+') #预编译成一个模式对象
+>>> if datepat.match(text1):
+... print('yes')
+... else:
+... print('no')
+...
+yes
+>>> if datepat.match(text2):
+... print('yes')
+... else:
+... print('no')
+...
+no
+>>>
+
+match()总是从字符串开始去匹配，若针对整个文本搜索出所有的匹配项，使用 findall() 方法去代替。
+>>> text = 'Today is 11/27/2012. PyCon starts 3/13/2013.'
+>>> datepat.findall(text)
+['11/27/2012', '3/13/2013']
+>>>
+
+在定义正则式时，常会将部分模式用括号包起来以引入捕获组。
+>>> datepat = re.compile(r'(\d+)/(\d+)/(\d+)')
+>>>
+
+引入捕获组通常能简化后续对匹配文本的处理，因为可以分别将每个组的内容提取出来。
+>>> m = datepat.match('11/27/2012')
+>>> m
+<_sre.SRE_Match object at 0x1005d2750>
+>>> # Extract the contents of each group
+>>> m.group(0) #group()：分组函数，group（0）就是匹配正则表达式整体结果
+'11/27/2012'
+>>> m.group(1) #group（1）列出第一个括号匹配部分
+'11'
+>>> m.group(2)
+'27'
+>>> m.group(3)
+'2012'
+>>> m.groups()
+('11', '27', '2012')
+>>> month, day, year = m.groups()
+>>>
+
+>>> # Find all matches (notice splitting into tuples)
+>>> text
+'Today is 11/27/2012. PyCon starts 3/13/2013.'
+>>> datepat.findall(text)
+[('11', '27', '2012'), ('3', '13', '2013')]
+>>> for month, day, year in datepat.findall(text):
+... print('{}-{}-{}'.format(year, month, day)) #str.format()格式化函数
+...
+2012-11-27
+2013-3-13
+>>>
+
+findall()方法会搜索文本并以列表形式返回所有的匹配。若想以迭代方式（不以列表形式）返回匹配，可以使用 finditer() 方法来代替。
+>>> for m in datepat.finditer(text):
+... print(m.groups())
+...
+('11', '27', '2012')
+('3', '13', '2013')
+>>>
+
+注意：match() 方法仅仅检查字符串的开始部分。它的匹配结果有可能并不是期望的那样。
+>>> m = datepat.match('11/27/2012abcdef')
+>>> m
+<_sre.SRE_Match object at 0x1005d27e8>
+>>> m.group()
+'11/27/2012'
+>>>
+
+若想精确匹配，确保正则表达式以$结尾：
+>>> datepat = re.compile(r'(\d+)/(\d+)/(\d+)$')
+>>> datepat.match('11/27/2012abcdef')
+>>> datepat.match('11/27/2012')
+<_sre.SRE_Match object at 0x1005d2750>
+>>>
 
 
 
