@@ -1,1 +1,136 @@
+04循环结构
+循环结构就是程序中控制某条或某些指令重复执行的结构。在Python中构造循环结构有两种做法，一种是for-in循环，一种是while循环。
 
+for-in循环
+如果明确的知道循环执行的次数或者要对一个容器进行迭代（后面会讲到），则推荐使用for-in循环
+例如：1~100求和
+sum = 0
+for x in range(101):
+    sum += x
+print(sum)
+用while循环实现1~100求和
+sum = 0
+num = 1
+while num <= 100:
+    sum += num
+    num += 1
+print(sum)
+
+注意range的用法：
+range(101)：可以用来产生0到100范围的整数，需要注意的是取不到101。
+range(1, 101)：可以用来产生1到100范围的整数，相当于前面是闭区间后面是开区间。
+range(1, 101, 2)：可以用来产生1到100的奇数，其中2是步长，即每次数值递增的值。
+range(100, 0, -2)：可以用来产生100到1的偶数，其中-2是步长，即每次数字递减的值。
+
+1~100之间的偶数求和
+sum = 0
+for x in range(2, 101, 2):
+    sum += x
+print(sum)
+用while循环实现1~100之间的偶数求和
+sum, num = 0, 2
+while num <= 100:
+    sum += num
+    num += 2
+print(sum)
+
+while循环
+如果要构造不知道具体循环次数的循环结构，我们推荐使用while循环。
+while循环通过一个能够产生或转换出bool值的表达式来控制循环，表达式的值为True则继续循环；表达式的值为False则结束循环。
+import random
+
+answer = random.randint(1, 100)
+counter = 0
+while True:
+    counter += 1
+    number = int(input('请输入: '))
+    if number < answer:
+        print('大一点')
+    elif number > answer:
+        print('小一点')
+    else:
+        print('恭喜你猜对了!')
+        break
+print('你总共猜了%d次' % counter)
+if counter > 7:
+    print('你的智商余额明显不足')
+break关键字来提前终止循环，需要注意的是break只能终止它所在的那个循环。除了break之外，还有另一个关键字是continue，它可以用来放弃本次循环后续的代码直接让循环进入下一轮。
+
+嵌套的循环：九九乘法表
+for i in range(1, 10):
+    for j in range(1, i + 1): #i从1到9，j对应的从1到i，注意这里要用（i+1）
+        print('%d*%d=%d' % (i, j, i * j), end='\t') #占位符,以制表符结尾
+    print() #简单的换行，不需要判断什么东西再换行，直接写在循环外面换行
+
+练习
+练习1：输入一个正整数判断是不是素数。
+#写一个循环，从2到这个数的平方根+1的整数，计算是否取余为0，若取余为0，则不为素数
+from math import sqrt
+
+num = int(input('请输入一个正整数: '))
+end = int(sqrt(num))
+is_prime = True #先给他一个True，再通过判断改变True为False，很好的思路
+for x in range(2, end + 1):
+    if num % x == 0:
+        is_prime = False
+        break
+if is_prime and num != 1:
+    print('%d是素数' % num)
+else:
+    print('%d不是素数' % num)
+
+练习2：输入两个正整数，计算它们的最大公约数和最小公倍数。
+两个数的最大公约数是两个数的公共因子中最大的那个数；两个数的最小公倍数则是能够同时被两个数整除的最小的那个数。
+x = int(input('x = '))
+y = int(input('y = '))
+# 如果x大于y就交换x和y的值
+if x > y:
+    # 通过下面的操作将y的值赋给x, 将x的值赋给y
+    x, y = y, x
+# 从两个数中较小的数开始做递减的循环
+for factor in range(x, 0, -1):
+    if x % factor == 0 and y % factor == 0:
+        print('%d和%d的最大公约数是%d' % (x, y, factor))
+        print('%d和%d的最小公倍数是%d' % (x, y, x * y // factor)) #注意最小公倍数与最大公约数的关系
+        break
+
+练习3：打印如下所示的三角形图案。
+*
+**
+***
+****
+*****
+
+    *
+   **
+  ***
+ ****
+*****
+
+    *
+   ***
+  *****
+ *******
+*********
+
+row = int(input('请输入行数: '))
+for i in range(row): #从0开始，到row-1
+    for _ in range(i + 1): #每行对应的*数与行数相同
+        print('*', end='') 
+    print() #换行
+
+
+for i in range(row):
+    for j in range(row):
+        if j < row - i - 1: #总的行数减去当前行数，为空格数
+            print(' ', end='')
+        else:
+            print('*', end='')
+    print()
+
+for i in range(row):
+    for _ in range(row - i - 1):
+        print(' ', end='')
+    for _ in range(2 * i + 1): #奇数，i从0开始的
+        print('*', end='')
+    print()
