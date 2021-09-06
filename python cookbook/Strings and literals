@@ -324,6 +324,60 @@ def matchcase(word): #找到匹配的大小写
 对于一般的忽略大小写的匹配操作，简单的传递一个re.IGNORECASE标志参数就足够了。
 对于某些需要大小写转换的Unicode匹配可能还不够，详细见2.10小节。
 
+2.7 定义实现最短匹配的正则表达式
+q：正在试着用正则表达式匹配某个文本模式，但是它找到的是模式的最长可能匹配。而你想修改它变成查找最短的可能匹配。
+这个问题一般出现在需要匹配一对分隔符之间的文本的时候(比如引号包含的字符串)。
+>>> str_pat = re.compile(r'"(.*)"') #(.)匹配任意字符
+>>> text1 = 'Computer says "no."'
+>>> str_pat.findall(text1)
+['no.']
+>>> text2 = 'Computer says "no." Phone says "yes."'
+>>> str_pat.findall(text2)
+['no." Phone says "yes.']
+>>>
+
+这个例子中，模式 r'\"(.*)\"' 的意图是匹配被双引号包含的文本。
+但是在正则表达式中*操作符是贪婪模式的，因此匹配操作会查找最长的可能匹配。
+为了修正这个问题，可以在模式中的*操作符后面加上?修饰符，这样就使得匹配变成非贪婪模式，从而得到最短的匹配，就像这样：
+>>> str_pat = re.compile(r'"(.*?)"')
+>>> str_pat.findall(text2)
+['no.', 'yes.']
+>>>
+
+ 通过在 * 或者 + 这样的操作符后面添加一个 ? 可以强制匹配算法改成寻找最短的可能匹配。
+
+2.8 编写多行模式的正则表达式
+q：用正则表达式去匹配一大块的文本，需要跨越多行去匹配。
+比如，假设你想试着去匹配C语言分割的注释：
+>>> comment = re.compile(r'/\*(.*?)\*/')
+>>> text1 = '/* this is a comment */'
+>>> text2 = '''/* this is a
+... multiline comment */
+... '''
+>>>
+>>> comment.findall(text1)
+[' this is a comment ']
+>>> comment.findall(text2) #不支持对换行的支持
+[]
+>>>
+
+为了修正这个问题，可以修改模式字符串，增加对换行的支持。比如：
+>>> comment = re.compile(r'/\*((?:.|\n)*?)\*/')
+>>> comment.findall(text2)
+[' this is a\n multiline comment ']
+>>>
+(?:.|\n) 指定了一个非捕获组(也就是它定义了一个仅仅用来做匹配，而不能通过单独捕获或者编号的组)。
+
+方案二：
+re.compile()函数可接受一个标志参数叫re.DOTALL，可以让正则表达式中的点(.)匹配包括换行符在内的任意字符。比如：
+>>> comment = re.compile(r'/\*(.*?)\*/', re.DOTALL)
+>>> comment.findall(text2)
+[' this is a\n multiline comment ']
+对于简单的情况使用re.DOTALL标记参数工作的很好，但是如果模式非常复杂或者是为了构造字符串令牌（tokenizing）而将多个模式合并起来（2.18节），最好还是定义自己的正则表达式模式。
+
+
+
+
 
 
 
