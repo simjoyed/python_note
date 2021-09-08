@@ -535,18 +535,24 @@ if __name__ == '__main__':
     main()
 
 
+#学生考试成绩表
+def main():
+    names = ['关羽', '张飞', '赵云', '马超', '黄忠']
+    subjs = ['语文', '数学', '英语']
+    scores = [[0] * 3] * 5 #先生成做准备
+    for row, name in enumerate(names): #row, name 
+        print('请输入%s的成绩' % name)
+        for col, subj in enumerate(subjs): #col, subj 
+            scores[row][col] = float(input(subj + ': ')) 
+    print(scores)
+#   for row, name in enumerate(names): #第二种方法
+#       print('请输入%s的成绩' % name)
+#       scores[row] = [None] * len(subjs) #每一行生成占位列表，循环后生成所有行
+#       for col, subj in enumerate(subjs):
+#           score = float(input(subj + ': '))
+#           scores[row][col] = score
+#   print(scores)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == '__main__':
+    main()
 
