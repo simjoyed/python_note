@@ -321,6 +321,29 @@ print(scores.pop('骆昊', 100))
 scores.clear()
 print(scores)
 
+#字典的常用操作
+def main():
+    stu = {'name': '骆昊', 'age': 38, 'gender': True}
+    print(stu)
+    print(stu.keys())
+    print(stu.values())
+    print(stu.items())
+    for elem in stu.items():
+        print(elem) 
+        print(elem[0], elem[1]) 
+    if 'age' in stu:
+        stu['age'] = 20
+    print(stu)
+    stu.setdefault('score', 60) #dict.setdefault(key, default=None)，如果字典中包含有给定键，则返回该键对应的值，否则返回为该键设置的值。
+    print(stu)
+    stu.setdefault('score', 100)
+    print(stu)
+    stu['score'] = 100
+    print(stu)
+
+if __name__ == '__main__':
+    main()
+
 练习
 练习1：在屏幕上显示跑马灯文字。
 import os
